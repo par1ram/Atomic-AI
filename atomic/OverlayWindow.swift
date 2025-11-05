@@ -66,7 +66,7 @@ class OverlayWindow: ObservableObject {
         // Увеличенный размер окна для ответов
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
-            styleMask: [.borderless],
+            styleMask: [.borderless, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -77,6 +77,8 @@ class OverlayWindow: ObservableObject {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         window.hasShadow = true
         window.isMovableByWindowBackground = true
+        window.minSize = NSSize(width: 400, height: 300)
+        window.maxSize = NSSize(width: 1200, height: 1000)
 
         // Защита от демонстрации экрана
         window.sharingType = .none
@@ -247,19 +249,29 @@ struct ResponseWindowView: View {
                 Spacer()
             }
 
-            // Ответ AI с кодом
+            // Ответ AI с кодом (используем TextEditor для больших текстов)
             ScrollView {
-                Text(overlayWindow.response.isEmpty ? "Ожидание ответа..." : overlayWindow.response)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
-                    .padding(12)
+                if overlayWindow.response.isEmpty {
+                    Text("Ожидание ответа...")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(12)
+                } else {
+                    // Используем Text с правильным рендерингом длинных текстов
+                    Text(overlayWindow.response)
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                        .padding(12)
+                        .fixedSize(horizontal: false, vertical: true) // Важно для длинных текстов!
+                }
             }
         }
         .padding(16)
-        .frame(width: 600, height: 500)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(.ultraThinMaterial)

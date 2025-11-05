@@ -50,13 +50,6 @@
             ReferencedContainer = "container:atomic.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "GEMINI_API_KEY"
-            value = "AIzaSyD3DzkV5w7qGxHbcEhMsRqCeiktuw-q6cM"
-            isEnabled = "YES">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

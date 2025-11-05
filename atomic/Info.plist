@@ -18,8 +18,6 @@
 	<string>Приложению нужен доступ к микрофону для преобразования речи в текст и предоставления AI-советов в реальном времени.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Приложению нужен доступ к распознаванию речи для преобразования ваших слов в текст.</string>
-	<key>NSScreenCaptureDescription</key>
-	<string>Приложению нужен доступ к захвату экрана для извлечения контекста и предоставления релевантных AI-советов.</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Приложению нужен доступ к контролю клавиатуры для глобального hotkey Cmd+Enter.</string>
 	<key>LSUIElement</key>

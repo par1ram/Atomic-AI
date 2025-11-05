@@ -15,12 +15,57 @@ class GeminiAPIService {
         // ВАЖНО: API ключ берется из переменной окружения GEMINI_API_KEY
         // Установите её перед запуском: export GEMINI_API_KEY="your_key_here"
         // Или добавьте в Xcode: Product → Scheme → Edit Scheme → Run → Arguments → Environment Variables
+        
+        // Сначала пытаемся загрузить из .env файла
+        Self.loadEnvFile()
+        
         if let envKey = ProcessInfo.processInfo.environment["GEMINI_API_KEY"], !envKey.isEmpty {
             self.apiKey = envKey
+            print("✅ API ключ загружен из переменной окружения")
         } else {
             self.apiKey = ""
-            print("⚠️ ВНИМАНИЕ: Используется fallback API ключ. Установите GEMINI_API_KEY в environment!")
+            print("⚠️ ВНИМАНИЕ: API ключ не найден. Установите GEMINI_API_KEY в .env файл или environment!")
         }
+    }
+    
+    // Загрузка .env файла из корня проекта
+    private static func loadEnvFile() {
+        // Ищем .env в разных возможных местах
+        let possiblePaths = [
+            FileManager.default.currentDirectoryPath + "/.env",
+            Bundle.main.bundlePath + "/../../../.env", // Для запуска из Xcode
+            NSHomeDirectory() + "/Documents/Swift/atomic/.env" // Абсолютный путь
+        ]
+        
+        for envPath in possiblePaths {
+            guard let envContents = try? String(contentsOfFile: envPath, encoding: .utf8) else {
+                continue
+            }
+            
+            print("✅ Найден .env файл: \(envPath)")
+            
+            // Парсим .env файл
+            let lines = envContents.components(separatedBy: .newlines)
+            for line in lines {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                // Пропускаем комментарии и пустые строки
+                if trimmed.isEmpty || trimmed.hasPrefix("#") {
+                    continue
+                }
+                
+                // Парсим KEY=VALUE
+                let parts = trimmed.components(separatedBy: "=")
+                if parts.count >= 2 {
+                    let key = parts[0].trimmingCharacters(in: .whitespaces)
+                    let value = parts[1...].joined(separator: "=").trimmingCharacters(in: .whitespaces)
+                    setenv(key, value, 1)
+                    print("✅ Загружена переменная: \(key)")
+                }
+            }
+            return
+        }
+        
+        print("⚠️ .env файл не найден в: \(possiblePaths)")
     }
 
     func getSuggestion(prompt: String, retryCount: Int = 0) async throws -> String {
@@ -45,7 +90,7 @@ class GeminiAPIService {
             ],
             "generationConfig": [
                 "temperature": 0.7,
-                "maxOutputTokens": 4096,
+                "maxOutputTokens": 8192,  // Увеличено с 4096 для длинных ответов
                 "topP": 0.9,
                 "topK": 40,
                 "candidateCount": 1,
@@ -81,7 +126,8 @@ class GeminiAPIService {
         // Декодируем ответ
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let jsonString = String(data: data, encoding: .utf8) ?? "Нет данных"
-        print("📄 Полный JSON ответ:\n\(jsonString)")
+        print("📄 Полный JSON ответ (первые 500 символов):\n\(jsonString.prefix(500))...")
+        print("📊 Размер ответа: \(data.count) байт")
 
         // Парсинг ответа Gemini 2.5 (структура может отличаться)
         if let candidates = json?["candidates"] as? [[String: Any]],
@@ -90,6 +136,13 @@ class GeminiAPIService {
             // Проверяем finishReason
             if let finishReason = firstCandidate["finishReason"] as? String {
                 print("🏁 Finish reason: \(finishReason)")
+                
+                // ВАЖНО: Проверяем, не обрезан ли ответ
+                if finishReason == "MAX_TOKENS" {
+                    print("⚠️ ВНИМАНИЕ: Ответ обрезан из-за лимита токенов!")
+                } else if finishReason != "STOP" {
+                    print("⚠️ ВНИМАНИЕ: Необычный finishReason: \(finishReason)")
+                }
             }
 
             // Пытаемся получить content
@@ -97,7 +150,10 @@ class GeminiAPIService {
                let parts = content["parts"] as? [[String: Any]],
                let firstPart = parts.first,
                let text = firstPart["text"] as? String {
-                print("✅ Получен ответ из parts: \(text.prefix(100))...")
+                print("✅ Получен ответ из parts")
+                print("📏 Длина текста: \(text.count) символов")
+                print("📝 Первые 200 символов: \(text.prefix(200))...")
+                print("📝 Последние 200 символов: ...\(text.suffix(200))")
                 return text.trimmingCharacters(in: .whitespacesAndNewlines)
             }
 

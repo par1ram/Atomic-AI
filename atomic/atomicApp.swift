@@ -141,6 +141,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         print("📱 Приложение запущено")
+        
+        // Загрузить переменные окружения из .env файла
+        EnvLoader.loadEnvFile()
 
         // Скрыть иконку из Dock
         NSApp.setActivationPolicy(.accessory)

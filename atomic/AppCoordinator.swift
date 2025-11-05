@@ -228,7 +228,10 @@ class AppCoordinator: ObservableObject {
         do {
             print("🌐 Отправка запроса в Gemini...")
             let suggestion = try await apiService.getSuggestion(prompt: prompt)
-            print("✅ Получен ответ от Gemini, длина: \(suggestion.count) символов")
+            print("✅ Получен ответ от Gemini")
+            print("📏 Длина ответа: \(suggestion.count) символов")
+            print("📝 Первые 300 символов:\n\(suggestion.prefix(300))")
+            print("📝 Последние 300 символов:\n...\(suggestion.suffix(300))")
 
             // Явно на MainActor - обновляем UI
             await MainActor.run {
